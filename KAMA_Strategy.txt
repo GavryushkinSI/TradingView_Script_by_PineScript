@@ -1,0 +1,35 @@
+//@version=2 Made by Gavryushkin Stanislav 
+strategy("KANA STRATEGY", overlay=true)
+day=input(1)
+years=input(2019)
+months=input(1)
+Length = input(21, minval=1)
+xPrice = close
+xvnoise = abs(xPrice - xPrice[1])
+nfastend = 0.666
+nslowend = 0.0645
+nsignal = abs(xPrice - xPrice[Length])
+nnoise = sum(xvnoise, Length)
+nefratio = iff(nnoise != 0, nsignal / nnoise, 0)
+nsmooth = pow(nefratio * (nfastend - nslowend) + nslowend, 2) 
+nAMA = nz(nAMA[1]) + nsmooth * (xPrice - nz(nAMA[1]))
+x=nAMA>nAMA[1]?nAMA:nz(x[1])
+y=nAMA<nAMA[1]?nAMA:nz(y[1])
+//plot(nAMA, color=blue, title="KAMA")
+//plot(x, color=green)
+s=x-nAMA
+b=nAMA-y
+plot(s,color=red)
+plot(b,color=green)
+liner=input(100)
+plot(liner,linewidth=3)
+buy=b>=liner
+sell=s>=liner
+longCondition = buy
+if (longCondition and year>=years and month>=months and dayofmonth>=day)
+    strategy.entry("long", strategy.long)
+strategy.close("long",when=b<liner)
+shortCondition = sell
+if (shortCondition and year>=years and month>=months and dayofmonth>=day)
+    strategy.entry("short", strategy.short)
+strategy.close("short",when=s<liner)  

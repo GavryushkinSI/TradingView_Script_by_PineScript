@@ -1,0 +1,109 @@
+﻿//@version=2 Made by Gavryushkin Stanislav. This script included seven trend strategyes for RENKO
+strategy("Пробитие максимума минимума-Ренко",slippage=80,currency="RUB",pyramiding=0, overlay=true,default_qty_value=20)
+p = input(30, minval=1)
+xx = input(1, minval=1)
+q = input(9, minval=1)
+first_high_stop = highest(high, p) - xx * atr(p)
+first_low_stop = lowest(high, p) + xx * atr(p)
+stop_short = highest(first_high_stop, q)
+stop_long = lowest(first_low_stop, q) 
+//plot(stop_long, color=black,linewidth=3)
+//plot(stop_short, color=black,linewidth=3)
+direction_4=stop_long>stop_long[1]?1:stop_long<stop_long[1]?-1:nz(direction_4[1])
+src=close
+l =input(3, title="Vma lenght") 
+std=input(false, title="Show Trend Direction")
+bc=input(false, title="Color bars based on Trend")
+k = 1.0/l
+pdm = max((src - src[1]), 0)
+mdm = max((src[1] - src), 0)
+pdmS = ((1 - k)*nz(pdmS[1]) + k*pdm)
+mdmS = ((1 - k)*nz(mdmS[1]) + k*mdm)
+s = pdmS + mdmS
+pdi = pdmS/s
+mdi = mdmS/s
+pdiS = ((1 - k)*nz(pdiS[1]) + k*pdi)
+mdiS = ((1 - k)*nz(mdiS[1]) + k*mdi)
+d = abs(pdiS - mdiS)
+s1 = pdiS + mdiS
+iS = ((1 - k)*nz(iS[1]) + k*d/s1)
+hhv = highest(iS, l) 
+llv = lowest(iS, l) 
+d1 = hhv - llv
+vI = (iS - llv)/d1
+vma = (1 - k*vI)*nz(vma[1]) + k*vI*src
+vmaC=(vma > vma[1]) ? green : (vma<vma[1]) ? red : (vma==vma[1]) ? blue : black 
+plot(vma, color=std?vmaC:black, linewidth=3, title="VMA")
+direction_3=(vma > vma[1]) ? 1: (vma<vma[1]) ? -1 :nz(direction_3[1])
+//barcolor(bc?vmaC:na)
+x=vma>vma[1]?vma:nz(x[1])
+y=vma<vma[1]?vma:nz(y[1])
+ss=x-vma
+bb=vma-y
+liners=input(0)
+buys=bb>=liners
+sells=ss>=liners
+hline=input(2)
+//plot(ss,color=red)
+//plot(bb,color=green)
+//plot(hline,color=blue,linewidth=3)
+cond_1=(vmaC[1]==red and vmaC==green) or (vmaC[1]==blue and vmaC==green)?1:nz(cond_1[1])
+cond_2= (vmaC[1]==green and vmaC==red) or (vmaC[1]==blue and vmaC==red)?-1:nz(cond_2[1]) 
+longCondition = cond_1==1 and bb>=hline
+shortCondition = cond_2==-1 and  ss>=hline
+longclose=vmaC==red
+shortclose=vmaC==green
+months = input(1)
+days = input(01)
+years=input(2019)
+//////////////////////////////////////////////////
+condcheck=input(false,"Strategy highest timeframe without filtre")
+condcheck_2=input(false,"Classic strategy current timeframe with filtre")
+condcheck_3=input(false,"Strategy highest timeframe with filtre")
+condcheck_4=input(false,"Line green strategy current timeframe")
+condcheck_5=input(false,"Crop stop strategy current timeframe")
+condcheck_6=input(false,"Classic strategy current timeframe")
+condcheck_7=input(false,"Strategy highest timeframe without filtre modify")
+/////////////////////////////////////////////////
+frame= input("27")
+length = input(title="Length", type=integer, minval=1, maxval=1000, defval=1)
+upBound = highest(high, length)
+downBound = lowest(low, length)
+cond_3=close>upBound[1]?1:close<downBound[1]?-1:nz(cond_3[1])
+//plot(cond_3)
+upBoundD=security(tickerid,frame,upBound)
+downBoundD=security(tickerid,frame,downBound)
+closer=security(tickerid,frame,close)
+direction=upBound>upBound[1]?1:downBound<downBound[1]?-1:nz(direction[1])
+direction_2=upBoundD>upBoundD[1]?1:downBoundD<downBoundD[1]?-1:nz(direction_2[1])
+
+plot(upBound,color=black)
+plot(downBound,color=black)
+cond=closer>upBoundD[1]?1:closer<downBoundD[1]?-1:nz(cond[1])
+cond_11=cond==1?1:cond==-1?-1:nz(cond_11[1])
+cond_22=direction==1?1:direction==-1?-1:nz(cond_22[1])
+cond_33=direction_2==1 and direction_3==1?1:direction_2==-1 and direction_3==-1?-1:nz(cond_33[1])
+cond_44=direction_3==1 and bb>=liners?1:direction_3==-1 and ss>=liners?-1:nz(cond_44[1])
+cond_55=direction_4==1?1:direction_4==-1?-1:nz(cond_55[1])
+cond_66=high>upBound[1]+syminfo.mintick?1:downBound[1]-syminfo.mintick?-1:nz(cond_66[1])
+cond_77=cond_66==1 and direction_2==1?1:cond_66==-1 and direction_2==-1?-1:nz(cond_77[1])
+total=condcheck_3==true?cond_33:condcheck==true?cond_11:condcheck_2==true?cond_22:condcheck_4==true?cond_44:condcheck_5==true?cond_55:condcheck_6==true?cond_66:condcheck_7==true?cond_77:na
+// condcheck?cond==1:condcheck_2?direction==1 and year>=years:condcheck_3?direction_2==1 and direction_3==1 and year>=years:condcheck_4?direction_3==1 and  bb>=liners and year>=years:condcheck_5?direction_4==1 and year>=years:year>=years
+
+if (not na(close[length]) and year>=years and month>=months and dayofmonth>=days)
+    strategy.entry("ChBrkLE", strategy.long, stop=upBound+ syminfo.mintick, comment="ChBrkLE",when=total==1)
+if (not na(close[length]) and year>=years and month>=months  and dayofmonth>=days)   
+    strategy.entry("ChBrkSE", strategy.short, stop=downBound- syminfo.mintick, comment="ChBrkSE",when=total==-1)
+    
+r_1=high>upBound[1]+syminfo.mintick and cond_11[1]==1?1:low<downBound[1]-syminfo.mintick and cond_11[1]==-1?-1:nz(r_1[1])
+r_2=high>upBound[1]+syminfo.mintick and cond_22==1?1:low<downBound[1]-syminfo.mintick and cond_22==-1?-1:nz(r_2[1])
+r_3=high>upBound[1]+syminfo.mintick and direction_2==1 and direction_3==1 ?1:low<downBound[1]-syminfo.mintick and direction_2==-1 and direction_3==-1?-1:nz(r_3[1])
+r_4=high>upBound[1]+syminfo.mintick and cond_44==1?1:low<downBound[1]-syminfo.mintick and cond_44==-1?-1:nz(r_4[1])
+r_5=high>upBound[1]+syminfo.mintick and cond_55==1?1:low<downBound[1]-syminfo.mintick and cond_55==-1?-1:nz(r_5[1])
+r_6=cond_66==1?1:cond_66==-1?-1:nz(r_6[1])
+r_7=cond_77==1?1:cond_77==-1?-1:nz(r_7[1])
+total_graph=condcheck_3==true?r_3:condcheck==true?r_1:condcheck_2==true?r_2:condcheck_4==true?r_4:condcheck_5==true?r_5:condcheck_6==true?r_6:condcheck_7==true?r_7:na
+plotshape(cond_66==1,style=shape.xcross,color=orange)
+plotshape(cond_66==-1,style=shape.xcross,color=maroon)   
+color_standart=close>open?black:gray
+barcolor(total_graph==1 and cond_66==1?lime:total_graph==-1 and cond_66==-1?yellow:color_standart)  
